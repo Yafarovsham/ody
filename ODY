@@ -1,0 +1,129 @@
+from scipy.integrate import odeint, quad
+import numpy as np
+import matplotlib.pyplot as plt
+from math import *
+
+
+#Умножение кватерниона на число 
+def umnch (lam, mu): 
+    nu=[0,0,0,0]
+    for i in range (4):
+        nu[i] = lam*mu[i] 
+    return nu
+
+#Нахождение нормы
+def norma (lam): 
+    nu=0
+    for i in range (4):
+        nu += lam[i]**2
+    return nu
+
+#Произведение кватернионов
+def mult (l, m): 
+    nu=[0,0,0,0]
+    nu[0]=l[0]*m[0] - l[1]*m[1] - l[2]*m[2] - l[3]*m[3]
+    nu[1]=l[0]*m[1] + l[1]*m[0] + l[2]*m[3] - l[3]*m[2]
+    nu[2]=l[0]*m[2] - l[1]*m[3] + l[2]*m[0] + l[3]*m[1]
+    nu[3]=l[0]*m[3] + l[1]*m[2] - l[2]*m[1] + l[3]*m[0]
+    return nu
+
+#-------------------------main-------------------------------
+
+c = 2 # коэффициент жесткости пружины
+m = 5 # масса груза
+p = 1
+q = 1
+r = 1
+
+#Функция угловой скорости 
+def f (t):
+    return t/10+0.001
+
+# Кватернион из pqr умножаем на угловую скорость
+def omega (t): 
+    return umnch(f(t), [0,p,q,r])
+
+# Правая часть системы ДУ
+def func(lam,t): 
+    return umnch(0.5, mult(lam, omega(t)))
+
+t = 10
+tt = 10
+
+# разбиваем отрезок времени на 100 частей
+t = np.linspace(0,10,100) 
+
+# задаем начальные параметры
+lam = [1,2,3,4] # задаем начальные параметры
+
+#Решаем систему ДУ ч/з ф-ю odeint
+ans = odeint(func, lam0, t) 
+
+def omega_mod(tau):
+  return sqrt(norma(omega(tau)))
+
+#Cписок нормы 
+list_norma = list(map(norma, ans))
+print('list_norma =',np.array(list_norma))
+
+#Отклонение max и min нормы от нормы исходного кватерниона
+pogr = max(abs(norma(lam)-max(list_norma)),abs(norma(lam)-min(list_norma)))
+print('pogr=',pogr)
+
+#Записываем решения для x1, x2, x3, x4 
+l0 = ans[:,0] 
+l1 = ans[:,1] 
+l2 = ans[:,2]
+l3 = ans[:,3]
+
+#Графики решения ДУ относительно х1, x2, x3, x4
+fig1 = plt.figure(figsize=(10, 5))
+ax = fig1.add_subplot(211)
+plt.plot(t, l0, 'orange', linewidth = 2, label='x1')
+plt.plot(t, l1, 'blue', linewidth = 2, label='x2')
+plt.plot(t, l2, 'red', linewidth = 2, label='x3')
+plt.plot(t, l3, 'green', linewidth = 2, label='x4')
+plt.legend(loc='best')
+plt.tick_params(labelsize = 12)
+ax.set_xlabel('$time$', size=18)
+ax.xaxis.set_label_coords(1.02, 0)
+ax.set_ylabel('$x$', rotation=0, size=18)
+ax.yaxis.set_label_coords(-.01, .95)
+plt.grid()
+plt.show()
+
+ # Точное решение
+def exact(t, lam): 
+    int_om = quad(omega_mod,0,t)[0]
+    ans = [0,0,0,0]
+    om = omega(t)
+    mod_om = sqrt(norma(om))
+    ans[0]= cos(int_om*t/2)
+    for i in range (1,4):
+        ans[i] = om[i]*sin(int_om*t/2)/mod_om
+    ans = mult(lam0, ans)
+    return ans
+
+ex = [] 
+for x in zip(t, l0, l1, l2, l3):
+    c = exact(x[0], lam0)
+    l=[abs(x[1] - c[0]), abs(x[2] - c[1]), abs(x[3] - c[2]), abs(x[4] - c[3])]
+    ex.append(l)
+
+
+# строим графики погрешностей
+ex=np.array(ex)
+fig2 = plt.figure(figsize=(10, 5))
+ax = fig2.add_subplot(212)
+plt.plot(t, ex[:,0], 'orange', linewidth = 2, label='err x1')
+plt.plot(t, ex[:,1], 'blue', linewidth = 2, label='err x2')
+plt.plot(t, ex[:,2], 'red', linewidth = 2, label='err x3')
+plt.plot(t, ex[:,3], 'green', linewidth = 2, label='err x4')
+plt.legend(loc='best')
+plt.tick_params(labelsize = 12)
+ax.set_xlabel('$time$', size=18)
+ax.xaxis.set_label_coords(1.02, 0)
+ax.set_ylabel('$x$', rotation=0, size=18)
+ax.yaxis.set_label_coords(-.01, .95)
+plt.grid()
+plt.show()
