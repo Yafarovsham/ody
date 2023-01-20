@@ -1,12 +1,12 @@
 from math import *
 
 gl = [1,2,3,4]
-mom = [4,5,6,7]
-L =(gl,mom)
+m = [4,5,6,7]
+L =(gl,m)
 
 gl = [1,4,6,8]
-mom = [3,5,7,9]
-M = (gl,mom)
+m = [3,5,7,9]
+M = (gl,m)
 
 #сумма
 def summa(lam,mu):
@@ -51,40 +51,40 @@ def sopr(mu1):
 #сумма бикватернионов
 def sB(l,m):
   glav = summa(l[0],m[0])
-  mom = summa(l[1],m[1])
-  return(glav,mom)
+  m = summa(l[1],m[1])
+  return(glav,m)
 
 print('Сумма бикватернионов:',sB(L,M))
 
 #разность бикватернионов
 def rB(l,m):
   glav = raz(l[0],m[0])
-  mom = raz(l[1],m[1])
-  return(glav,mom)
+  m = raz(l[1],m[1])
+  return(glav,m)
 
 print('Разность бикватернионов:',rB(L,M))
 
 #умножение на число бикватернион
 def umnachisB(chis,l):
   glav = umnachis(chis,l[0])
-  mom = umnachis(chis,l[1])
-  return(glav,mom)
+  m = umnachis(chis,l[1])
+  return(glav,m)
 
 print('Число*бикватернион:',umnachisB(2,L))
 
 #произведение бикватернионов
 def multipB(l,m):
   glav = multip(l[0],m[0])
-  mom = summa(multip(l[1],m[0]), multip(l[0],m[1]))
-  return(glav,mom)
+  m = summa(multip(l[1],m[0]), multip(l[0],m[1]))
+  return(glav,m)
 
 print('Произведение бикватернионов:',multipB(L,M))
 
 #сопряженный бикватернион 
 def soprB(l):
   glav = sopr(l[0])
-  mom = sopr(l[1])
-  return(glav,mom)
+  m = sopr(l[1])
+  return(glav,m)
 
 print('Сопряженный бикватернион :',soprB(L))
 
@@ -99,8 +99,8 @@ def obrD(l):
   print(l)
   sq = l[0][0]**2
   glav = umnachis((1/sq),l[0])
-  mom = umnachis((-1/sq),l[1])
-  return(glav,mom)
+  m = umnachis((-1/sq),l[1])
+  return(glav,m)
 
 #Обратный бикватернион
 def obrB(l):
