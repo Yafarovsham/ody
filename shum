@@ -1,0 +1,140 @@
+from sympy import Symbol, diff, sin, cos, tan, evalf, lambdify
+from math import radians
+from scipy.interpolate import interp1d
+import numpy as np
+from scipy.integrate import odeint
+import matplotlib.pyplot as plt
+
+psi0, theta0, phi0 = map(radians, [40, 70, 35])
+
+vel = 0.9
+
+def perc(x, ex):  # <-- Подсчет погрешности вычислений
+  return np.abs(x - ex)
+
+def pogr(t, a = 1e-1): #создаем шум
+    return 2 * a * np.random.rand(len(t)) - a
+def real():
+  t = Symbol('t')
+  psi = psi0 + vel * sin(.3 * t)  #для гарм закона
+  theta = theta0 + vel * sin(.3 * t)
+  phi = phi0 + vel * sin(.3 * t)
+
+  #psi = psi0 + vel * t #для лин закона
+  #theta = theta0 + vel * t
+  #phi = phi0 + vel * t
+  return [psi, theta, phi]
+
+def omega():
+  psi, theta, phi = real()
+  t = Symbol('t')
+  om1 = diff(psi, t) * sin(theta) * sin(phi) + diff(theta, t) * cos(phi)
+  om2 = diff(psi, t) * sin(theta) * cos(phi) - diff(theta, t) * sin(phi)
+  om3 = diff(phi, t) + diff(psi, t) * cos(theta)
+  return [om1, om2, om3]
+
+def f_Euler(x, t):
+  psi, theta, phi = x #radians
+  om1, om2, om3 = [ cur.subs(Symbol('t'), t) for cur in omega()]
+  fl = (1.0 / sin(theta)) * (om1 * sin(phi) + om2 * cos(phi))
+  f2 = om1 * cos(phi) - om2 * sin(phi)
+  f3 = om3 - (1.0 / tan(theta)) * (om1 * sin(phi) + om2 *cos(phi))
+  return [fl, f2, f3]
+
+def createFigure(time, param):
+    plt.plot(time, param[0], linewidth=2, label='$psi$', color='orange')
+    plt.plot(time, param[1], linewidth=2, label='$theta$', color='green')
+    plt.plot(time, param[2], linewidth=2, label='$phi$', color='red')
+    plt.xlabel('time', fontsize=15)
+    plt.ylabel('$угол$ ', fontsize=15)
+    plt.legend()
+    plt.grid()
+    plt.savefig('pyk')
+    plt.show()
+
+if __name__ == "__main__":
+  t_f = 5
+  n = 10 #узлы
+  time = np.linspace(0, t_f, 499)
+  real_t = np.linspace(0, t_f, n)
+  inter_rnd = interp1d(real_t, pogr(real_t), kind='cubic', fill_value="extrapolate")
+  angle0 = [psi0, theta0, phi0]
+  print("\nanangle0 = ", angle0)
+
+  ang = odeint(f_Euler, angle0, time)
+  #print('ang = ', ang)
+
+  t = Symbol('t')
+
+  psi_f = 2 * t + 10
+  theta_f = 2 * t + 10
+  phi_f = 2 * t + 10
+
+  psi_f = lambdify(t, psi_f)
+  theta_f = lambdify(t, theta_f)
+  phi_f = lambdify(t, phi_f)
+
+  x1 = ang[:, 0]
+  x2 = ang[:, 1]
+  x3 = ang[:, 2]
+
+  x1_o = psi_f(time)
+  x2_o = theta_f(time)
+  x3_o = phi_f(time)
+  print('\nanangle final num = ', ang[-1])
+
+  #точное решение
+  ex = [[cur.subs(Symbol("t"), tcur) for cur in real()] for tcur in time]
+
+  error = [abs(cur[0] - cur[1]) for cur in zip(ang, ex)]
+
+  param = [[], [], []]
+  for par in error:
+    param[0].append(par[0])
+    param[1].append(par[1])
+    param[2].append(par[2])
+
+  createFigure(time, param)
+
+#график шума
+  fig2, axs = plt.subplots(nrows=1, ncols=1, figsize=(10, 10))
+
+  axs.plot(time, inter_rnd(time), '-c', linewidth=2)
+  axs.tick_params(labelsize=16)
+  axs.set_xlabel('$t$', size=16)
+  axs.xaxis.set_label_coords(1.05, -0.025)
+  axs.set_ylabel('$rand$', rotation=0, size=16)
+  axs.yaxis.set_label_coords(-.1, .95)
+  axs.grid()
+
+  fig2.savefig('График шума.png')
+
+  fig2, axs = plt.subplots(nrows=3, ncols=1, figsize=(10, 10))
+
+#погрешность
+  axs[0].set_title(label="Погрешность")
+  axs[0].plot(time, perc(x1_o, x1), '-c', linewidth=2)
+  axs[0].tick_params(labelsize=16)
+  axs[0].set_xlabel('$t$', size=16)
+  axs[0].xaxis.set_label_coords(1.05, -0.025)
+  axs[0].set_ylabel('$perc(\psi)$', rotation=0, size=16)
+  axs[0].yaxis.set_label_coords(-.1, .95)
+  axs[0].grid()
+
+  axs[1].plot(time, perc(x2_o, x2), '-c', linewidth=2)
+  axs[1].tick_params(labelsize=16)
+  axs[1].set_xlabel('$t$', size=16)
+  axs[1].xaxis.set_label_coords(1.05, -0.025)
+  axs[1].set_ylabel('$perc(\\theta)$', rotation=0, size=16)
+  axs[1].yaxis.set_label_coords(-.1, .95)
+  axs[1].grid()
+
+  axs[2].plot(time, perc(x3_o, x3), '-c', linewidth=2)
+  axs[2].tick_params(labelsize=16)
+  axs[2].set_xlabel('$t$', size=16)
+  axs[2].xaxis.set_label_coords(1.05, -0.025)
+  axs[2].set_ylabel('$perc(\phi)$', rotation=0, size=16)
+  axs[2].yaxis.set_label_coords(-.1, .95)
+  axs[2].grid()
+
+  fig2.savefig('Погрешность.png')
