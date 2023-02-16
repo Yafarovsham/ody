@@ -1,0 +1,29 @@
+import math
+from stl import mesh
+from mpl_toolkits import mplot3d
+from matplotlib import pyplot
+
+# Create a new plot
+figure = pyplot.figure()
+axes = figure.add_subplot(projection='3d')
+
+#Загружаем STL файл и добавляем векторы на график
+my_mesh = mesh.Mesh.from_file('all.stl')
+axes.add_collection3d(mplot3d.art3d.Poly3DCollection(my_mesh.vectors))
+#my_mesh.x+=25
+my_mesh.rotate([0.0, 0.5, 0.0], math.radians(90))
+# Auto scale to the mesh siz
+scale = my_mesh.points.flatten()
+axes.auto_scale_xyz(scale, scale, scale)
+
+volume, com, inertia = my_mesh.get_mass_properties()
+print("Объем                              = {0}".format(volume))
+print("Положение центра масс (ПЦМ)        = {0}".format(com))
+print("Матрица инерции, выраженная в ПЦМ  = {0}".format(inertia[0,:]))
+print("                                     {0}".format(inertia[1,:]))
+print("                                     {0}".format(inertia[2,:]))
+
+
+# Show the plot to the screen
+pyplot.show()
+
