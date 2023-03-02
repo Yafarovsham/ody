@@ -1,0 +1,57 @@
+from numpy import linspace
+import matplotlib.pyplot as plt
+from scipy.optimize import fsolve
+from scipy.integrate import odeint
+
+global u1
+global u2
+
+u1 = 1
+u2 = 1
+
+def f(x): #выражаем x2
+    x1 = x
+    f1 = (-0.3 * u1) / (0.6 * x1 + 0.4)
+    f2 = (0.1*u2-0.7*x1)/(0.3*x1)
+    return f1, f2
+
+def f0(x,t): # Система из условия
+    x1, x2 = x
+    f1 = 0.6 * x1 * x2 + 0.4 * x2 + 0.3 * u1
+    f2 = 0.3*x1*x2 + 0.7*x1 - 0.1*u2
+    return [f1, f2]
+
+x0 = [0.19, -0.6]
+ans = fsolve(f0, x0, args=(0,)) # наодим равновесие
+print("ans =", ans)
+t = linspace(0, 10)
+y_x = odeint(f0,ans, t)
+
+import matplotlib.pyplot as plt
+T = 10 # Zadacha Koshi
+x1 = linspace(-10, T, 600)
+y1, y2 = f(x1)
+
+# График x2 от x1
+fig2, axs = plt.subplots(nrows=1, ncols = 1, figsize=(10, 10))
+
+axs.plot(x1,y1)
+axs.plot(x1,y2)
+axs.grid()
+fig2.savefig('x.png')
+# График в пол равновесия
+fig2, axs = plt.subplots(nrows=1, ncols = 1, figsize=(10, 10))
+
+axs.plot(t,y_x)
+axs.grid()
+fig2.savefig('y_x.png')
+
+ans = [ans[0] + 0.01, ans[1] + 0.01]
+y_x = odeint(f0,ans, t)
+
+# График вне пол равновесия
+fig2, axs = plt.subplots(nrows=1, ncols = 1, figsize=(10, 10))
+
+axs.plot(t,y_x)
+axs.grid()
+fig2.savefig('y_no_x.png')
